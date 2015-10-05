@@ -13,6 +13,8 @@
     description: "CoreOS-Universal-Publishing"
     teamDL: "george.angel@ft.com"
     environment_tag: default
+    etcdKeyValues: "{{ lookup('template', 'etcdKeyValues') }}"
+
   vars_files:
     - keys.yaml
 
