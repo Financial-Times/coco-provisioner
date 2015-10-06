@@ -28,9 +28,8 @@ VAULT_PASS=xxxxxxxx
 AWS_SECRET_ACCESS_KEY=xxxxxxx
 AWS_ACCESS_KEY_ID=xxxxxxxx
 
-# [optional]
 SERVICE_DEFINITION_LOCATION=https://raw.githubusercontent.com/Financial-Times/up-service-files/master/services.yaml
-# make a unique identifier (you can use this to search your splunk logs as well)
+## make a unique identifier (this will be used for DNS tunnel, splunk, AWS tags)
 ENVIRONMENT_TAG=xxxx
 ```
 
