@@ -80,6 +80,13 @@ coreos:
           [Service]
           Type=oneshot
           ExecStartPre=/bin/sh -c "while true; do etcdctl cluster-health && break || sleep 2; done"
+          ExecStart=/bin/sh -c "etcdctl set /ft/_credentials/aws/aws_access_key_id '{{ aws_access_key_id }}' > /dev/null;"
+          ExecStart=/bin/sh -c "etcdctl set /ft/_credentials/aws/aws_secret_access_key '{{ aws_secret_access_key }}' > /dev/null;"
+          ExecStart=/bin/sh -c "etcdctl set /ft/_credentials/elb_name 'coreos-up-{{cp.msg}}' > /dev/null;"
+          ExecStart=/bin/sh -c "etcdctl set /ft/config/environment_tag '{{environment_tag}}' > /dev/null;"
+          ExecStart=/bin/sh -c "etcdctl set /ft/config/splunk-forwarder/splunk_url 'https://ingest.splunk.glb.ft.com/coco-up/fleet' > /dev/null;"
+          ExecStart=/bin/sh -c "etcdctl set /ft/config/service-definition-location '{{service_definition_location}}' > /dev/null;"
+          ExecStart=/bin/sh -c "etcdctl set /ft/_credentials/konstructor/api-key '{{ konstructor_api_key }}' > /dev/null;"
           {% for kv in etcd_properties %}
             ExecStart=/bin/sh -c "etcdctl set {{ kv }} > /dev/null;"
           {% done %}
