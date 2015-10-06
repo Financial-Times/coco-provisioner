@@ -1,0 +1,8 @@
+{"etcd_properties": [
+    "/ft/_credentials/cms-notifier/post-credentials '{{ cms_notifier_credentials }}'",
+    "/ft/_credentials/wp '{{ wp_contentApi_key }}'",
+    "/ft/config/binary-writer/bucket 'bucket'",
+    "/ft/config/synthetic-image-publication-monitor-aws/test-uuid 'net-set'",
+    "/ft/config/synthetic-image-publication-monitor-ucs/test-uuid 'not-set'"
+  ]
+}
