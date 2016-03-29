@@ -83,7 +83,9 @@ coreos:
         [Service]
         Type=oneshot
         ExecStart=/bin/bash -c "/usr/sbin/fsck -a /dev/xvdf || /usr/sbin/mkfs.ext4 /dev/xvdf"
-        ExecStart=/bin/bash -c "/usr/bin/test -e /vol || /usr/bin/mkdir /vol"
+        ExecStart=/bin/bash -c "/usr/bin/test -e /vol || /usr/bin/mkdir -p /vol"
+        ExecStart=/bin/bash -c "/usr/sbin/fsck -a /dev/xvdg || /usr/sbin/mkfs.ext4 /dev/xvdg"
+        ExecStart=/bin/bash -c "/usr/bin/test -e /var/lib/data/neo4j || /usr/bin/mkdir -p /var/lib/data/neo4j"
     - name: vol.mount
       command: start
       content: |
