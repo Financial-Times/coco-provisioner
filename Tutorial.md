@@ -5,9 +5,10 @@ CoCo Tutorial
 Goals and overview
 ------------------
 
-By the time you finish this you will have deployed your own private CoCo cluster,
+By the time you finish this you will have deployed your own private CoCo cluster into AWS,
 figured out how to investigate problems and rectify them. You will *not* yet be able to run the
-Universal Publishing stack; that'll come later.
+Universal Publishing stack; that'll come later. Firstly, you'll get a "Hello World" style service running
+on your cluster.
 
 At a high level you will:
 
@@ -45,32 +46,67 @@ Set up SSH
         bash
         ssh-add
 
-NB. This needs to be done [every time the machine boots](http://unix.stackexchange.com/questions/140075/ssh-add-is-not-persistent-between-reboots);
-on OSX this problem can be avoided by adding them to the OSX keychain:
-
-    bash
-    ssh-add -K
-
-
-Creating an environment branch
-------------------------------
-
-1. Clone the [up-service-file](https://github.com/Financial-Times/up-service-files) repository:
+    NB. This needs to be done [every time the machine boots](http://unix.stackexchange.com/questions/140075/ssh-add-is-not-persistent-between-reboots);
+    on OSX this problem can be avoided by adding them to the OSX keychain:
 
         bash
-        git clone git@github.com:Financial-Times/up-service-files.git
+        ssh-add -K
 
-This repository contains definitions of the services you'll deploy.
 
-2. Create a branch (using an example branch name of `myBranch`):
+Create a services repository
+----------------------------
 
-        bash
-        cd up-service-files
-        git checkout -b myBranch
-        git push -u origin myBranch
+1. Create a public accessible repository. Probably the easiest way to do this is to create a public repo on [GitHub](https://github.com).
 
-NB. You should periodically re-sync your private by issuing a `git rebase master` within your branch.
+1. Create a service rosta:
 
+    You will need to create a `services.yml` file, which will contain details of the services you want to run in the cluster.
+    Define one service by adding the following:
+
+    ```yaml
+    services:
+    - name: my-app@.service
+      count: 2
+    ```
+
+    In the UPP CoCo stack each service typically has a main `@.service` which contains details of the service and a
+    second `-sidekick@.service` file which is used to monitor the service. For the purpose of this tutorial we'll
+    just have the main service definition.
+
+1. Create the service definitions
+
+  All services run as systemd like entities through (fleet)[https://coreos.com/fleet/docs/latest/launching-containers-fleet.html].
+
+  Create a file called `my-app@.service` and add the following
+
+  ```
+  [Unit]
+  Description=MyApp
+  After=docker.service
+  Requires=docker.service
+
+  [Service]
+  TimeoutStartSec=0
+  ExecStartPre=-/usr/bin/docker kill busybox1
+  ExecStartPre=-/usr/bin/docker rm busybox1
+  ExecStartPre=/usr/bin/docker pull busybox
+  ExecStart=/usr/bin/docker run --name busybox1 busybox /bin/sh -c "trap 'exit 0' INT TERM; while true; do echo Hello World; sleep 3; done"
+  ExecStop=/usr/bin/docker stop busybox1
+  ```
+
+  The `[Unit]` section lets you define dependencies, in this particular case we want to make sure docker is available before we try to use it!
+
+  The `[Service]` section is the nuts and bolts of how you launch your service. Essentially the `ExecStartPre` get run before the main `ExecStart` and `ExecStop` runs when you want to stop the service.
+
+###_[Service] in a bit more detail_
+
+    You'll notice that in the `ExecStartPre` section we tidy up anything left over from a previously running instance of the server. The `ExecStartPre=-/usr/bin/docker kill busybox1` and `ExecStartPre=-/usr/bin/docker rm busybox1` kill the service if it is running and remove the container.
+
+    Following this we get the latest 'busybox' docker image using `ExecStartPre=/usr/bin/docker pull busybox`.
+
+    The service is finally launched via `ExecStart=/usr/bin/docker run --name busybox1 busybox /bin/sh -c "trap 'exit 0' INT TERM; while true; do echo Hello World; sleep 3; done"` which will simply print "Hello World" every three seconds unless it receives a term signal.
+
+1. Commmit and push your recent additions
 
 Create a CoCo cluster
 ---------------------
@@ -113,19 +149,17 @@ Windows and OSX rather than the toolbox, see [Beta programme](https://beta.docke
 5. Run the provisioner:
 
     (NB. You may need to run this as root, if this is the case `sudo` first.)
+  ```bash
+  docker run \
+      --env "VAULT_PASS=$VAULT_PASS" \
+      --env "TOKEN_URL=$TOKEN_URL" \
+      --env "SERVICES_DEFINITION_ROOT_URI=$SERVICES_DEFINITION_ROOT_URI" \
+      --env "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
+      --env "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" \
+      --env "ENVIRONMENT_TAG=$ENVIRONMENT_TAG" coco-provisioner
+  ```
 
-        bash
-        docker run \
-            --env "VAULT_PASS=$VAULT_PASS" \
-            --env "TOKEN_URL=$TOKEN_URL" \
-            --env "SERVICES_DEFINITION_ROOT_URI=$SERVICES_DEFINITION_ROOT_URI" \
-            --env "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
-            --env "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" \
-            --env "ENVIRONMENT_TAG=$ENVIRONMENT_TAG" \
-            --env "BINARY_WRITER_BUCKET=$BINARY_WRITER_BUCKET" \
-            --env "AWS_MONITOR_TEST_UUID=$AWS_MONITOR_TEST_UUID" \
-            --env "COCO_MONITOR_TEST_UUID=$COCO_MONITOR_TEST_UUID" \
-            --env "BRIDGING_MESSAGE_QUEUE_PROXY=$BRIDGING_MESSAGE_QUEUE_PROXY" coco-provisioner
+  There are some additional parameters which can be passed, however we won't need them for the moment since they configure CoCo's settings so it can access Kafka etc.
 
 6. All being well you will now have a CoCo cluster. It is unlikely to be healthy when it starts.
 
@@ -156,6 +190,32 @@ and remove the HTTP listener.
   | _ENVIRONMENT_TAG_-tunnel-up.ft.com | Allowed you to SSH into your cluster |
 
   Check you can resolve these hosts by running a `dig` or `nslookup`.
+
+# Deploying your own UPP stack
+
+## Creating an environment branch
+
+1. Checkout the [up-service-file](https://github.com/Financial-Times/up-service-files) repository
+
+  ```bash
+  git clone git@github.com:Financial-Times/up-service-files.git
+  ```
+
+This repository contains definitions of the services you'll deploy.
+
+1. Create a branch
+
+Since we want to deploy a 'private' service which may or may not get deployed to production environment, you need to create a branch from master. Replace myBranch with something more imaginative:
+
+  ```bash
+  cd up-service-files
+  git checkout -b myBranch
+  git push --set-upstream myBranch
+  ```
+
+## Keeping yourself up to date
+
+You should periodically re-sync your private by issuing a `git rebase master` within your branch.
 
 9. Congratulations, you've built a CoCo cluster! That was the easy bit; now it's time to nurse it to health.
 
@@ -196,3 +256,7 @@ If this is deploying or barfing it's unlikely that your cluster is healthy.
 
             bash
             ssh $ENVIRONMENT_TAG-tunnel-up
+    SSH into the cluster using the following:
+    ```bash
+    ssh $ENVIRONMENT_TAG-tunnel-up
+    ```
