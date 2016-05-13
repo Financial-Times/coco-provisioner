@@ -52,7 +52,7 @@ on OSX this problem can be avoided by adding them to the OSX keychain:
     ssh-add -K
 
 
-Creatinggit push -u origin dafydd-sandbox an environment branch
+Creating an environment branch
 ------------------------------
 
 1. Clone the [up-service-file](https://github.com/Financial-Times/up-service-files) repository:
@@ -84,27 +84,33 @@ simple docker commands.
     *NB. If you feel like it there is now a 'native' docker available for
 Windows and OSX rather than the toolbox, see [Beta programme](https://beta.docker.com/docs/features-overview/) for details.*
 
-1. Clone this repository:
+2. Clone this repository:
 
         bash
         git clone git@github.com:Financial-Times/coco-provisioner.git
 
-1. Build this docker image:
+3. Build this docker image:
 
         bash
+        eval "$(docker-machine env default)" # if you are using VM-based docker
         docker build .
 
-1. Set configuration parameters (CoCo Provisioner needs to know a few details):
+4. Set configuration parameters (CoCo Provisioner needs to know a few details):
 
-    |          ENV VAR               |      Comments                           |                Suggested / default value              |
-    | ------------------------------ | --------------------------------------- | ----------------------------------------------------- |
-    | `SERVICES_DEFINITION_ROOT_URI` | Service definitions                     |                                                       |
-    | `TOKEN_URL`                    | The etcd token identifying this cluster | `curl https://discovery.etcd.io/new?size=5`           |
-    | `AWS_MONITOR_TEST_UUID`        |                                         | `curl -s  https://www.uuidgenerator.net/api/version4` |
-    | `COCO_MONITOR_TEST_UUID`       |                                         | `curl -s  https://www.uuidgenerator.net/api/version4` |
-    | `BRIDGING_MESSAGE_QUEUE_PROXY` |                                         |                                                       |
+    |          ENV VAR               |      Comments                           |                Suggested / default value             |
+    | ------------------------------ | --------------------------------------- | ---------------------------------------------------- |
+    | `SERVICES_DEFINITION_ROOT_URI` | Service definitions                     |                                                      |
+    | `TOKEN_URL`                    | The etcd token identifying this cluster | `curl -s https://discovery.etcd.io/new?size=5`       |
+    | `AWS_MONITOR_TEST_UUID`        | TBD                                     | `curl -s https://www.uuidgenerator.net/api/version4` |
+    | `COCO_MONITOR_TEST_UUID`       | TBD                                     | `curl -s https://www.uuidgenerator.net/api/version4` |
+    | `BRIDGING_MESSAGE_QUEUE_PROXY` | Optional                                |                                                      |
+    | `VAULT_PASS`                   | TBD                                     | See LastPass.                                        |
+    | `AWS_SECRET_ACCESS_KEY`        | TBD                                     |                                                      |
+    | `AWS_ACCESS_KEY_ID`            | TBD                                     |                                                      |
+    | `ENVIRONMENT_TAG`              | TBD                                     |                                                      |
+    | `BINARY_WRITER_BUCKET`         | TBD                                     |                                                      |
 
-1. Run the provisioner:
+5. Run the provisioner:
 
     (NB. You may need to run this as root, if this is the case `sudo` first.)
 
@@ -121,17 +127,16 @@ Windows and OSX rather than the toolbox, see [Beta programme](https://beta.docke
             --env "COCO_MONITOR_TEST_UUID=$COCO_MONITOR_TEST_UUID" \
             --env "BRIDGING_MESSAGE_QUEUE_PROXY=$BRIDGING_MESSAGE_QUEUE_PROXY" coco-provisioner
 
-1. All being well you will now have a CoCo cluster. It is unlikely to be healthy when it starts.
+6. All being well you will now have a CoCo cluster. It is unlikely to be healthy when it starts.
 
     1. To verify that the cluster has been started, go to the [AWS console](http://awslogin.internal.ft.com/) and go to the
 eu-west-1 (Ireland) view of running EC2 instances.
 
-    1. In the filter field enter the value of the `ENVIRONMENT_TAG`
-used to create the cluster.
+    1. In the filter field enter the value of the `ENVIRONMENT_TAG` used to create the cluster.
 
     *NB. Wait for all your servers to be in a running state before you move on!*
 
-1. **(Recommended, but Optional)** Currently the cluster will only be available via HTTP, which is obviously not secure.
+7. **(Recommended, but Optional)** Currently the cluster will only be available via HTTP, which is obviously not secure.
 Since all the clusters share the same authentication token, you should really add an HTTPS listener to the ELB,
 and remove the HTTP listener.
 
@@ -144,7 +149,7 @@ and remove the HTTP listener.
 
     1. Remove the HTTP listener.
 
-1. Creating the cluster should have registered some new host names with our DNS provider:
+8. Creating the cluster should have registered some new host names with our DNS provider:
 
   | _ENVIRONMENT_TAG_-up.ft.com        | HTTP endpoint for your cluster       |
   | ---------------------------------- | -------------------------------------|
@@ -152,7 +157,7 @@ and remove the HTTP listener.
 
   Check you can resolve these hosts by running a `dig` or `nslookup`.
 
-1. Congratulations, you've built a CoCo cluster! That was the easy bit; now it's time to nurse it to health.
+9. Congratulations, you've built a CoCo cluster! That was the easy bit; now it's time to nurse it to health.
 
 
 Nursing CoCo to health
@@ -173,7 +178,7 @@ If this is deploying or barfing it's unlikely that your cluster is healthy.
 
    1. All being well, the deployer will just work, but it has been known to go [a bit Pete Tong](https://en.wikipedia.org/wiki/Pete_Tong) so do check it.
 
-1. Check the cluster's health:
+2. Check the cluster's health:
 
    1. Look at the health checks. The system will take a little while to settle down.
    When it does there may be services in error, which will need some TLC and investigation.
@@ -185,7 +190,7 @@ If this is deploying or barfing it's unlikely that your cluster is healthy.
 
   1. Start with the lowest common service that is failing and work your way up the stack. For example there is a known problem with mongodb, which means that you'll almost certainly have problems with it (at least until this get fixed).
 
-1. Resuscitation of MongoDB:
+3. Resuscitation of MongoDB:
 
    1. Checking its state: SSH into the cluster using the following:
 
