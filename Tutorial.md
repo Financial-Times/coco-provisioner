@@ -46,11 +46,11 @@ Set up SSH
         bash
         ssh-add
 
-    NB. This needs to be done [every time the machine boots](http://unix.stackexchange.com/questions/140075/ssh-add-is-not-persistent-between-reboots);
-    on OSX this problem can be avoided by adding them to the OSX keychain:
+NB. This needs to be done [every time the machine boots](http://unix.stackexchange.com/questions/140075/ssh-add-is-not-persistent-between-reboots);
+on OSX this problem can be avoided by adding them to the OSX keychain:
 
-        bash
-        ssh-add -K
+    bash
+    ssh-add -K
 
 
 Create a services repository
@@ -238,6 +238,122 @@ If this is deploying or barfing it's unlikely that your cluster is healthy.
 
    1. All being well, the deployer will just work, but it has been known to go [a bit Pete Tong](https://en.wikipedia.org/wiki/Pete_Tong) so do check it.
 
+2. Create a branch (using an example branch name of `myBranch`):
+
+        bash
+        cd up-service-files
+        git checkout -b myBranch
+        git push -u origin myBranch
+
+NB. You should periodically re-sync your private by issuing a `git rebase master` within your branch.
+
+
+Create a CoCo cluster
+---------------------
+
+There are a set of instructions in the [main README file](/README.md).
+
+1. Set up a local instance of docker by downloading and installing [Docker Toolbox](https://www.docker.com/products/docker-toolbox).
+The CoCo Provisioner is a docker image, so ensure you have docker installed and are able to carry out
+simple docker commands.
+
+    *NB. If you feel like it there is now a 'native' docker available for
+Windows and OSX rather than the toolbox, see [Beta programme](https://beta.docker.com/docs/features-overview/) for details.*
+
+2. Clone this repository:
+
+        bash
+        git clone git@github.com:Financial-Times/coco-provisioner.git
+
+3. Build this docker image:
+
+        bash
+        eval "$(docker-machine env default)" # if you are using VM-based docker
+        docker build .
+
+4. Set configuration parameters (CoCo Provisioner needs to know a few details):
+
+    |          ENV VAR               |      Comments                           |                Suggested / default value             |
+    | ------------------------------ | --------------------------------------- | ---------------------------------------------------- |
+    | `SERVICES_DEFINITION_ROOT_URI` | Service definitions                     |                                                      |
+    | `TOKEN_URL`                    | The etcd token identifying this cluster | `curl -s https://discovery.etcd.io/new?size=5`       |
+    | `AWS_MONITOR_TEST_UUID`        | TBD                                     | `curl -s https://www.uuidgenerator.net/api/version4` |
+    | `COCO_MONITOR_TEST_UUID`       | TBD                                     | `curl -s https://www.uuidgenerator.net/api/version4` |
+    | `BRIDGING_MESSAGE_QUEUE_PROXY` | Optional                                |                                                      |
+    | `VAULT_PASS`                   | TBD                                     | See LastPass.                                        |
+    | `AWS_SECRET_ACCESS_KEY`        | TBD                                     |                                                      |
+    | `AWS_ACCESS_KEY_ID`            | TBD                                     |                                                      |
+    | `ENVIRONMENT_TAG`              | TBD                                     |                                                      |
+    | `BINARY_WRITER_BUCKET`         | TBD                                     |                                                      |
+
+5. Run the provisioner:
+
+    (NB. You may need to run this as root, if this is the case `sudo` first.)
+
+        bash
+        docker run \
+            --env "VAULT_PASS=$VAULT_PASS" \
+            --env "TOKEN_URL=$TOKEN_URL" \
+            --env "SERVICES_DEFINITION_ROOT_URI=$SERVICES_DEFINITION_ROOT_URI" \
+            --env "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
+            --env "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" \
+            --env "ENVIRONMENT_TAG=$ENVIRONMENT_TAG" \
+            --env "BINARY_WRITER_BUCKET=$BINARY_WRITER_BUCKET" \
+            --env "AWS_MONITOR_TEST_UUID=$AWS_MONITOR_TEST_UUID" \
+            --env "COCO_MONITOR_TEST_UUID=$COCO_MONITOR_TEST_UUID" \
+            --env "BRIDGING_MESSAGE_QUEUE_PROXY=$BRIDGING_MESSAGE_QUEUE_PROXY" coco-provisioner
+
+6. All being well you will now have a CoCo cluster. It is unlikely to be healthy when it starts.
+
+    1. To verify that the cluster has been started, go to the [AWS console](http://awslogin.internal.ft.com/) and go to the
+eu-west-1 (Ireland) view of running EC2 instances.
+
+    1. In the filter field enter the value of the `ENVIRONMENT_TAG` used to create the cluster.
+
+    *NB. Wait for all your servers to be in a running state before you move on!*
+
+7. **(Recommended, but Optional)** Currently the cluster will only be available via HTTP, which is obviously not secure.
+Since all the clusters share the same authentication token, you should really add an HTTPS listener to the ELB,
+and remove the HTTP listener.
+
+    1. Navigate to *Load Balancers* in the AWS EC2 console and sort them by 'date created'. Your load balancer
+    should be at the top, but to be sure you are modifying the correct one, check the tags associated with it
+    and you should see your `ENVIRONMENT_TAG`.
+
+    1. Edit the HTTP endpoints and add a new HTTPS listener on port 443 that directs to port 80 (over HTTP)
+    using the `wildcard-ft-com` certificate.
+
+    1. Remove the HTTP listener.
+
+8. Creating the cluster should have registered some new host names with our DNS provider:
+
+  | _ENVIRONMENT_TAG_-up.ft.com        | HTTP endpoint for your cluster       |
+  | ---------------------------------- | -------------------------------------|
+  | _ENVIRONMENT_TAG_-tunnel-up.ft.com | Allowed you to SSH into your cluster |
+
+  Check you can resolve these hosts by running a `dig` or `nslookup`.
+
+9. Congratulations, you've built a CoCo cluster! That was the easy bit; now it's time to nurse it to health.
+
+
+Nursing CoCo to health
+----------------------
+
+1. Check the deployer. The deployer, as its name suggests, is responsible for deploying services to the cluster.
+If this is deploying or barfing it's unlikely that your cluster is healthy.
+
+   1. SSH onto the cluster:
+
+            bash
+            ssh $ENVIRONMENT_TAG-tunnel-up.ft.com
+
+   1. Tail the deployer log:
+
+            bash
+            ssh semantic-tunnel-up.ft.com fleetctl journal --lines=100 deployer
+
+   1. All being well, the deployer will just work, but it has been known to go [a bit Pete Tong](https://en.wikipedia.org/wiki/Pete_Tong) so do check it.
+
 2. Check the cluster's health:
 
    1. Look at the health checks. The system will take a little while to settle down.
@@ -260,3 +376,7 @@ If this is deploying or barfing it's unlikely that your cluster is healthy.
     ```bash
     ssh $ENVIRONMENT_TAG-tunnel-up
     ```
+   1. Checking its state: SSH into the cluster using the following:
+
+            bash
+            ssh $ENVIRONMENT_TAG-tunnel-up
