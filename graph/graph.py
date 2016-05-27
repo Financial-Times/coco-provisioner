@@ -19,15 +19,15 @@ def run():
         with open('{}/{}'.format(BASE_PATH, filename)) as fp:
             s = servicefiles.ServiceFile(fp)
             services.append(s)
-    graph_text = "digraph dependency_graph {\n"
+    graph_text = "digraph dependency_graph {\n    rankdir=LR"
     print [s.wants for s in services]
     for s in services:
         for r in s.requires:
-            graph_text += "    {} -> {} [label=\"Requires\" style=\"solid\", color=\"Red\"];\n".format(
+            graph_text += "    {} -> {} [label=\"Requires\", style=\"solid\", color=\"Red\"];\n".format(
                 sanitise(s.name), sanitise(r)
             )
         for w in s.wants:
-            graph_text += "    {} -> {} [label=\"Wants\" style=\"dashed\", color=\"Blue\"];\n".format(
+            graph_text += "    {} -> {} [label=\"Wants\", style=\"dashed\", color=\"Blue\"];\n".format(
                 sanitise(s.name), sanitise(w)
             )
     graph_text += "}"
