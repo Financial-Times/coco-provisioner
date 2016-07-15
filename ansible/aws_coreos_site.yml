@@ -233,6 +233,11 @@
           - device_name: /dev/xvdf
             volume_size: 200
             delete_on_termination: true
+          - device_name: /dev/xvdg
+            volume_size: 50
+            iops: 1000
+            volume_type: io1
+            delete_on_termination: true
         count_tag:
           Name: "ftpr1{{clusterid}}-caw1a-eu-p"
         instance_tags:
@@ -268,6 +273,11 @@
           - device_name: /dev/xvdf
             volume_size: 200
             delete_on_termination: true
+          - device_name: /dev/xvdg
+            volume_size: 50
+            iops: 1000
+            volume_type: io1
+            delete_on_termination: true
         count_tag:
           Name: "ftpr2{{clusterid}}-caw1b-eu-p"
         instance_tags:
@@ -302,6 +312,11 @@
             delete_on_termination: true
           - device_name: /dev/xvdf
             volume_size: 200
+            delete_on_termination: true
+          - device_name: /dev/xvdg
+            volume_size: 50
+            iops: 1000
+            volume_type: io1
             delete_on_termination: true
         count_tag:
           Name: "ftpr3{{clusterid}}-caw1c-eu-p"
