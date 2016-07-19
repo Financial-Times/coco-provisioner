@@ -106,6 +106,7 @@ coreos:
           ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/wp '{{ wp_contentApi_key }}'                                                        >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/kafka-bridge-pub-pre-prod/authorization_key '{{ pub_pre_prod_credentials }}'        >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/kafka-bridge-pub-prod/authorization_key '{{ pub_prod_credentials }}'                >/dev/null 2>&1 || true;"
+          ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/brightcove_auth '{{ brightcove_auth }}'                                             >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/environment_tag '{{environment_tag}}'                                                     >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/api_host '{{api_host}}'                                                                   >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/aws_region '{{region}}'                                                                   >/dev/null 2>&1 || true;"
