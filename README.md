@@ -69,6 +69,9 @@ export API_HOST=http://api.ft.com
 ##ROLES_BERTHA_URL refers to the spreadsheet of roles for curated authors.
 export AUTHORS_BERTHA_URL=http://bertha.site.example/123456XYZ/Authors
 export ROLES_BERTHA_URL=http://bertha.site.example/123456XYZ/Roles
+
+#For publishing videos, the brightcove-notifier and brightcove-metadata-preprocessor must connect to the Brightcove API with an id like this: 47628783001
+export BRIGHTCOVE_ACCOUNT_ID=
 ```
 
 
