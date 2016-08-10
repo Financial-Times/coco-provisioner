@@ -106,6 +106,7 @@ coreos:
           ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/wp '{{ wp_contentApi_key }}'                                                        >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/kafka-bridge-pub-pre-prod/authorization_key '{{ pub_pre_prod_credentials }}'        >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/kafka-bridge-pub-prod/authorization_key '{{ pub_prod_credentials }}'                >/dev/null 2>&1 || true;"
+          ExecStart=/bin/sh -c "etcdctl mk /ft/_credentials/brightcove_auth '{{ brightcove_auth }}'                                             >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/environment_tag '{{environment_tag}}'                                                     >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/api_host '{{api_host}}'                                                                   >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/aws_region '{{region}}'                                                                   >/dev/null 2>&1 || true;"
@@ -117,6 +118,7 @@ coreos:
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/kafka-bridge/ucs_queue_proxy_addrs '{{bridging_message_queue_proxy}}'                     >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/bertha/urls/authors '{{authors_bertha_url}}'                                              >/dev/null 2>&1 || true;"
           ExecStart=/bin/sh -c "etcdctl mk /ft/config/bertha/urls/roles '{{roles_bertha_url}}'                                                  >/dev/null 2>&1 || true;"
+          ExecStart=/bin/sh -c "etcdctl mk /ft/config/brightcove/account-id '{{brightcove_account_id}}'                                         >/dev/null 2>&1 || true;"
     - name: bootstrap.service
       command: start
       content: |
