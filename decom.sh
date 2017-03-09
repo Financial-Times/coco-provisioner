@@ -7,10 +7,10 @@ echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> /etc/boto.cfg
 ## activate virtual environment
 . .venv/bin/activate
 
-CLUSTERID=$(aws ec2 describe-instances --filter Name=tag:coco-environment-tag,Values=$ENVIRONMENT_TAG | jq '.Reservations[0].Instances[0].Tags[]' | cluster-id-extractor)
+CLUSTERID=$(aws ec2 describe-instances --filters "Name=tag:coco-environment-tag,Values=$ENVIRONMENT_TAG" "Name=instance-type,Values=m4.xlarge" | jq '.Reservations[0].Instances[0].Tags[]' | cluster-id-extractor)
 echo "ClusterID: $CLUSTERID"
 
-INSTANCE_IDS=$(aws ec2 describe-instances --filter Name=tag:coco-environment-tag,Values=$ENVIRONMENT_TAG | jq '{"instanceIds": [.Reservations[].Instances[].InstanceId]}')
+INSTANCE_IDS=$(aws ec2 describe-instances --filters "Name=tag:coco-environment-tag,Values=$ENVIRONMENT_TAG" "Name=instance-type,Values=m4.xlarge" | jq '{"instanceIds": [.Reservations[].Instances[].InstanceId]}')
 INSTANCE_IDS=`echo $INSTANCE_IDS`
 echo "Instances: $INSTANCE_IDS"
 
